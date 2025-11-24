@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "com.xiamo.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MixinGameHud"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "client": [
+    "MixinMouse"
+  ]
+}
