@@ -3,30 +3,35 @@ package com.xiamo.gui.clickGui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Indication
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.draggable2D
-import androidx.compose.foundation.gestures.rememberDraggable2DState
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.material.ripple
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -37,22 +42,22 @@ import androidx.compose.ui.unit.sp
 import com.xiamo.module.Category
 import com.xiamo.module.ModuleManager
 import net.minecraft.client.MinecraftClient
-import org.jetbrains.skia.FontStyleSet
 import kotlin.math.roundToInt
 
-class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: Int) {
+class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: Float,val height : Float) {
 
 
     var windowX by mutableStateOf(x.toFloat())
     var windowY by mutableStateOf(y.toFloat())
-    public var isDragging = false
+    var isDragging = false
     var isHover = false
     private var dragOffsetX = 0f
     private var dragOffsetY = 0f
-    val categoryTitleFont = 45.sp
+    val categoryTitleFont = 10.sp
+    val categoryContentFont = 7.sp
     val textStyle = TextStyle(fontSize = categoryTitleFont)
-    val radius: Dp = 6.dp
-    var height : Int = 30
+    val radius: Dp = 2.dp
+
 
     val backgroundColor = Color(26, 26, 26)
     val titleBgColor = Color(0, 0, 0)
@@ -64,18 +69,15 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
         val interfaceSource = remember { MutableInteractionSource() }
         val textMeasurer = rememberTextMeasurer()
         val density = LocalDensity.current
-        val textHeight = textMeasurer.measure(category.name, textStyle).size.height
-        val heightDp = with(density) { textHeight.toDp() }
         isHover = interfaceSource.collectIsHoveredAsState().value
-        height = (heightDp + 20.dp).value.toInt()
-        
+
 
         Column(
             modifier = Modifier
                 .offset { IntOffset(windowX.roundToInt(), windowY.roundToInt()) }
                 .width(width.dp)
                 .background(backgroundColor, RoundedCornerShape(radius))
-               ,
+            ,
             verticalArrangement = Arrangement.Center
         ) {
 
@@ -83,7 +85,7 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
                 elevation = 10.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(heightDp + 20.dp)
+                    .height(height.dp)
                     .shadow(5.dp, RoundedCornerShape(radius))
                     .hoverable(interfaceSource)
                 ,
@@ -111,7 +113,7 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
 
                 Text(
                     text = it.name,
-                    fontSize = (categoryTitleFont.value - 5).sp,
+                    fontSize = categoryContentFont,
                     fontWeight = FontWeight.Light,
                     color = Color.White,
                     modifier = Modifier
@@ -122,6 +124,8 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
                         .fillMaxWidth()
                         .background(moduleBgColor)
                         .padding(horizontal = 8.dp)
+                        .wrapContentSize(Alignment.Center,true)
+                        .wrapContentWidth(align = Alignment.CenterHorizontally),
 
                 )
             }
@@ -144,9 +148,16 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
         val scale = MinecraftClient.getInstance().window.scaleFactor
         val physX = mouseX * scale
         val physY = mouseY * scale
-        val physWidth = width
-        if (physX >= windowX && physX <= windowX + physWidth &&
-            physY >= windowY && physY <= windowY + height) {
+
+        // Dp 值的物理像素宽度
+        val scaledWidth = width * scale
+        // 标题栏的物理像素高度
+        val scaledHeight = height * scale
+
+        // 检查点击是否发生在窗口标题栏的物理边界内
+        if (physX >= windowX && physX <= windowX + scaledWidth &&
+            physY >= windowY && physY <= windowY + scaledHeight) {
+
             isDragging = true
             dragOffsetX = (physX - windowX).toFloat()
             dragOffsetY = (physY - windowY).toFloat()

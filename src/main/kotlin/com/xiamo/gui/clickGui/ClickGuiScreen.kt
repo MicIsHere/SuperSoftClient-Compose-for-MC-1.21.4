@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
@@ -50,12 +51,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,7 +79,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of("ClickGui")) {
     val categories = CopyOnWriteArrayList<ClickGuiWindow>()
 
-    var width = 400
+
 
 
 
@@ -84,6 +87,11 @@ class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of(
 
     @Composable
     override fun renderCompose() {
+        val density = LocalDensity.current
+        val width = with(density){15.dp.toPx()}
+        val height = with(density){4.dp.toPx()}
+        val spacer = with(density){5.dp.toPx()}
+        val start = with(density){10.dp.toPx()}
 
         LaunchedEffect(Unit )
         {
@@ -97,27 +105,30 @@ class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of(
             }
             )
         if (categories.count() ==0){
-            var x = 120
-            val y = 200
+            var x = start
+            val y = with(density){40.dp.toPx()}
+
             Category.entries.forEach { category ->
-                categories.add(ClickGuiWindow(x,y,category,width))
-                x+=width+50
+                categories.add(ClickGuiWindow(x.toInt(),y.toInt(),category,width,height))
+                x += with(density){(width + spacer).dp.toPx()}
             }
 
         }
 
-        Box(modifier = Modifier.fillMaxSize()
-            .dropShadow(
-                RoundedCornerShape(32.dp),
-                Shadow(8.dp, Color(0,0,0,20))
-            )
-            .safeContentPadding()
-        ){
-        }
+
 
 
         Box(modifier = Modifier.fillMaxSize().animateContentSize().scale(scale.width,scale.height)){
-            categories.forEach { it.renderCompose() }
+            Box(modifier = Modifier.fillMaxSize()
+                .dropShadow(
+                    RoundedCornerShape(32.dp),
+                    Shadow(8.dp, Color(0,0,0,20))
+                )
+                .safeContentPadding()
+            ){
+                categories.forEach { it.renderCompose() }
+            }
+
         }
 
 

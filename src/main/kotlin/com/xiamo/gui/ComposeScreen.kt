@@ -36,14 +36,12 @@ import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL33C
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 
 @OptIn(InternalComposeUiApi::class)
 open class ComposeScreen(val text: Text) : Screen(text) {
-
 
 
     var isVisible by mutableStateOf(false)
@@ -53,23 +51,47 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     var renderTarget : BackendRenderTarget? = null
     var mc = MinecraftClient.getInstance()
 
-    var currentScale: Double = mc.window.scaleFactor
+    var currentScale= mc.window.scaleFactor
 
     var lastScaleFactor = currentScale
 
     @OptIn(InternalComposeUiApi::class)
     var composeScene : ComposeScene? = null
 
-    private fun initCompose(width: Int,height: Int){
-        composeScene = CanvasLayersComposeScene(density = Density(1f), invalidate = {}).apply {
-            setContent { renderCompose() }
-        }
+    private fun closeSkiaResources() {
+        skiaContext?.close()
+        renderTarget?.close()
+        surface?.close()
+        skiaContext = null
+        renderTarget = null
+        surface = null
     }
 
-    @OptIn(InternalComposeUiApi::class)
+    private fun initCompose(width: Int, height: Int){
+        if (composeScene == null) {
+            composeScene = CanvasLayersComposeScene(
+                density = Density(MinecraftClient.getInstance().window.scaleFactor.toFloat()
+                ), invalidate = {}).apply {
+                setContent { renderCompose() }
+            }
+        } else {
+            composeScene?.density = Density(MinecraftClient.getInstance().window.scaleFactor.toFloat())
+        }
+        composeScene?.size = IntSize(width, height)
+    }
+
     private fun buildCompose(){
         val frameWidth = mc.window.framebufferWidth
         val frameHeight = mc.window.framebufferHeight
+
+        if (skiaContext != null && surface != null &&
+            surface!!.width == frameWidth && surface!!.height == frameHeight) {
+            return
+        }
+
+        closeSkiaResources()
+
+        skiaContext = DirectContext.makeGL()
         renderTarget = BackendRenderTarget.makeGL(frameWidth,frameHeight,0,8,mc.framebuffer.fbo,
             FramebufferFormat.GR_GL_RGBA8)
 
@@ -82,7 +104,6 @@ open class ComposeScreen(val text: Text) : Screen(text) {
 
     override fun removed() {
         if (!allowExit) ModuleManager.modules.find { it.name == this.text.string }?.disable()
-
         super.removed()
     }
 
@@ -94,43 +115,33 @@ open class ComposeScreen(val text: Text) : Screen(text) {
         mouseY: Int,
         delta: Float
     ) {
-        val client = MinecraftClient.getInstance()
-        currentScale = client.window.scaleFactor
-        val width = client.window.framebufferWidth
-        val height = client.window.framebufferHeight
-        if (composeScene == null) initCompose(width,height)
-        if (lastScaleFactor != currentScale) {
-            lastScaleFactor = currentScale
-            composeScene?.density = Density(currentScale.toFloat())
+        val mc = MinecraftClient.getInstance()
+
+        if (composeScene == null) initCompose(mc.window.width,mc.window.height)
+
+        if (lastScaleFactor != mc.window.scaleFactor){
+            closeSkiaResources()
+            initCompose(mc.window.width,mc.window.height)
+            lastScaleFactor = mc.window.scaleFactor
         }
+
+        if (composeScene?.size?.width != mc.window.width || composeScene?.size?.height != mc.window.height) {
+            closeSkiaResources()
+            initCompose(mc.window.width,mc.window.height)
+        }
+        currentScale = mc.window.scaleFactor
+
+        buildCompose()
+
         GlStateUtil.save()
         glStorePixel()
         skiaContext?.resetAll()
-        try {
-            if (skiaContext == null || skiaContext!!.isClosed) {
-                skiaContext = DirectContext.makeGL()
-            }
-            if (surface == null || surface?.width != width || surface?.height != height) {
-                surface?.close()
-                val renderTarget = BackendRenderTarget.makeGL(
-                    width, height, 0, 8,
-                    client.framebuffer.fbo, FramebufferFormat.GR_GL_RGBA8
-                )
-                surface = Surface.makeFromBackendRenderTarget(
-                    skiaContext!!, renderTarget, SurfaceOrigin.BOTTOM_LEFT, SurfaceColorFormat.RGBA_8888, ColorSpace.sRGB
-                )
-            }
-            composeScene?.size = IntSize(width, height)
-            surface?.canvas?.let { canvas ->
-                composeScene?.render(canvas.asComposeCanvas(), System.nanoTime())
-            }
-            skiaContext?.flush()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            GlStateUtil.restore()
 
-        }
+        RenderSystem.enableBlend()
+        surface?.let { composeScene?.render(it.canvas.asComposeCanvas(), System.nanoTime()) }
+        surface?.flush()
+        GlStateUtil.restore()
+        RenderSystem.disableBlend()
     }
 
 
@@ -146,8 +157,10 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     }
 
     override fun resize(client: MinecraftClient?, width: Int, height: Int) {
-        composeScene?.density = Density(currentScale.toFloat())
-        buildCompose()
+        closeSkiaResources()
+        if (client != null) {
+            initCompose(client.window.width, client.window.height)
+        }
         super.resize(client, width, height)
     }
 
@@ -161,7 +174,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
         )
         val event = AWTUtils.MouseEvent(
             (mouseX * currentScale).toInt(),
-            (mouseY*  currentScale).toInt(),
+            (mouseY* currentScale).toInt(),
             AWTUtils.getAwtMods(MinecraftClient.getInstance().window.handle),
             0,
             MouseEvent.MOUSE_MOVED
@@ -274,7 +287,6 @@ open class ComposeScreen(val text: Text) : Screen(text) {
             isVisible = false
             ModuleManager.modules.filter { it.isComposeScreen }.forEach{
                 if (it.name == text.string) {
-                    println(it.name)
                     it.disable()
                 }
             }
@@ -315,9 +327,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     @OptIn(InternalComposeUiApi::class)
     override fun close() {
         allowExit = true
-        skiaContext?.close()
-        renderTarget?.close()
-        surface?.close()
+        closeSkiaResources()
         composeScene?.close()
         super.close()
     }
@@ -333,8 +343,4 @@ open class ComposeScreen(val text: Text) : Screen(text) {
         GL33C.glPixelStorei(GL33C.GL_UNPACK_SKIP_PIXELS, 0)
         GL33C.glPixelStorei(GL33C.GL_UNPACK_ALIGNMENT, 4)
     }
-
-
-
-
 }

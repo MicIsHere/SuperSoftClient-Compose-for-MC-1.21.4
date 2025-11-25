@@ -5,8 +5,11 @@ import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
 import net.fabricmc.loader.impl.game.minecraft.applet.AppletMain
 import net.minecraft.client.MinecraftClient
-
+import javazoom.jl.player.*
 import java.io.File
+import javax.sound.sampled.AudioSystem
+import javax.swing.JLayer
+import javax.swing.JLayeredPane
 
 object MediaPlayer {
     val cachePath = File(mainDir.path+"/songs")
@@ -21,6 +24,7 @@ object MediaPlayer {
     }
 
     fun playerSound(file : File){
+
 
 
     }

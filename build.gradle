@@ -56,7 +56,7 @@ dependencies {
 	shade(compose.material)
 	shade(compose.runtime)
 	shade("org.jetbrains.compose.ui:ui-desktop")
-	shade 'com.github.javazoom:jlayer:master-SNAPSHOT'
+    shade("javazoom:jlayer:1.0.1")
 
 
 }
