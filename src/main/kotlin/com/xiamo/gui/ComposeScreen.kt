@@ -271,13 +271,13 @@ open class ComposeScreen(val text: Text) : Screen(text) {
             AWTUtils.KeyEvent(
                 KeyEvent.KEY_TYPED,
                 time,
-                AWTUtils.getAwtMods(mc.window.handle),
+                AWTUtils.getAwtMods(MinecraftClient.getInstance().window.handle),
                 Key.Unknown.keyCode.toInt(),
                 chr,
                 KeyEvent.KEY_LOCATION_UNKNOWN
             )
         )
-        return super.charTyped(chr, modifiers)
+        return true
     }
 
 
@@ -292,19 +292,17 @@ open class ComposeScreen(val text: Text) : Screen(text) {
             }
         }
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) allowExit = true
-        val awtKey = glfwToAwtKeyCode(keyCode)
-        val time = System.nanoTime() / 1_000_000
-        composeScene?.sendKeyEvent(
-            AWTUtils.KeyEvent(
-                KeyEvent.KEY_PRESSED,
-                time,
-                AWTUtils.getAwtMods(mc.window.handle),
-                awtKey,
-                0.toChar(),
-                KeyEvent.KEY_LOCATION_STANDARD
-            )
+        val event = AWTUtils.KeyEvent(
+            KeyEvent.KEY_PRESSED,
+            System.currentTimeMillis(),
+            AWTUtils.getAwtMods(mc.window.handle),
+            glfwToAwtKeyCode(keyCode),
+            KeyEvent.CHAR_UNDEFINED,
+            KeyEvent.KEY_LOCATION_STANDARD
         )
-        return super.keyPressed(keyCode, scanCode, modifiers)
+
+        composeScene?.sendKeyEvent(event)
+        return true
     }
 
     @OptIn(InternalComposeUiApi::class)

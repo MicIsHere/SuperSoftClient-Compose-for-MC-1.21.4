@@ -86,7 +86,8 @@ object Hud : ComposeModule("Hud","界面") {
                                    .animateContentSize()
                                    .animateItem()
                                ,
-                               textAlign = TextAlign.Right
+                               textAlign = TextAlign.Right,
+                               style = TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color.Black, offset = Offset(1f,1f), blurRadius = 5f))
                            )
                        }
 
