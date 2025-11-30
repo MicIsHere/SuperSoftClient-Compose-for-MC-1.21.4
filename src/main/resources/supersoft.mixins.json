@@ -3,7 +3,8 @@
   "package": "com.xiamo.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "MixinGameHud"
+    "MixinGameHud",
+    "MixinScreen"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -13,6 +14,7 @@
   },
   "client": [
     "MixinKey",
-    "MixinMouse"
+    "MixinMouse",
+    "MixinTick"
   ]
 }

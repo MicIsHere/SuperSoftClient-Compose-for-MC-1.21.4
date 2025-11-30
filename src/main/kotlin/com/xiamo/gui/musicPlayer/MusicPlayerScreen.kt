@@ -67,40 +67,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.decodeToImageBitmap
-import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.sun.jndi.toolkit.dir.DirSearch.search
 import com.xiamo.SuperSoft
 import com.xiamo.gui.ComposeScreen
-import com.xiamo.module.ModuleManager
-import com.xiamo.module.modules.render.ClickGui.instance
+import com.xiamo.notification.NotificationManager
+import com.xiamo.notification.Notify
 import com.xiamo.utils.misc.MediaPlayer
-import com.xiamo.utils.misc.MediaPlayer.isPlaying
 import com.xiamo.utils.misc.NeteaseCloudApi
 import com.xiamo.utils.misc.Song
 import kotlinx.coroutines.delay
@@ -110,16 +97,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.util.Icons
 import net.minecraft.text.Text
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.OutputStream
-import java.lang.reflect.Constructor
-import java.util.concurrent.CopyOnWriteArrayList
 
 class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.of("MusicPlayer")) {
     var songs = mutableStateListOf<Song>()
@@ -211,7 +192,6 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
                                     }
                                 }
                                 Spacer(modifier = Modifier.size(3.dp))
-
                                 Button(modifier = leftButtonModifier,onClick = {
                                     page.value = "List"
 
@@ -235,8 +215,6 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
 
                                     }
                                 }
-
-
 
 
                             }
@@ -300,22 +278,12 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
                                     Icon(icon, contentDescription = if(isPlaying) "Pause" else "Play", tint = Color.White, modifier = Modifier.size(10.dp))
                                 }
                             }
-
                             Text(
                                 "6",
                                 modifier = Modifier.align(Alignment.CenterEnd),
                                 color = Color.White
                             )
                         }
-
-
-
-
-
-
-
-
-
 
 
                     }
@@ -399,7 +367,6 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
             visible = true
         }
         var songName by remember { mutableStateOf("")}
-
         AnimatedVisibility(visible,enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(horizontalArrangement = Arrangement.Center,verticalAlignment = Alignment.CenterVertically,modifier = Modifier.padding(top = 15.dp).fillMaxWidth()) {
@@ -417,11 +384,11 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
                         Icon(SuperSoft.javaClass.getResourceAsStream("/assets/supersoft/ui/icon/search.png").readAllBytes().decodeToImageBitmap(), contentDescription = "Serach", tint = Color.White,modifier = Modifier.size(12.dp))
                     }
                 }
-
                 LazyColumn(modifier = Modifier
                     .padding(15.dp)
                     .background(Color(55,67,87).copy(alpha = 0.3f)
                         ,RoundedCornerShape(5.dp))
+                    .animateContentSize()
                 ) {
                     songs.forEach { song ->
                         item {
@@ -430,7 +397,9 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
                             val alpha = animateFloatAsState(targetValue = if (isHover.value) 0.3f else 0.1f).value
                             Box(modifier = Modifier
                                 .clickable(onClick = {
-                                    playSongs(song)
+                                    Thread{
+                                        NeteaseCloudApi.playSong(song)
+                                    }.start()
 
                                 })
                                 .padding(start = 5.dp,end = 5.dp)
@@ -526,55 +495,7 @@ class MusicPlayerScreen(var parentScreen : Screen? = null) : ComposeScreen(Text.
     }
 
 
-    fun playSongs(song: Song): Boolean {
-        val songID = song.id
-        try {
-            val url = NeteaseCloudApi.getUrl(songID)
-            println("Downloading from URL: $url")
-            val cacheDir = File(SuperSoft.dataPath, "cache")
-            if (!cacheDir.exists()) {
-                val ok = cacheDir.mkdirs()
-                if (!ok) {
-                    println("Failed to create cache directory: ${cacheDir.absolutePath}")
-                    return false
-                }
-            }
 
-            val file = File(cacheDir, "$songID.mp3")
-            if (file.exists()) {
-                println("Song already cached, playing directly: ${file.absolutePath}")
-                MediaPlayer.playSound(file,song)
-                return true
-            }
-
-            val client = OkHttpClient()
-            val request = Request.Builder().url(url).build()
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    println("Request failed with code: ${response.code}")
-                    return false
-                }
-
-                val body = response.body ?: return false
-                body.byteStream().use { input ->
-                    file.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            }
-
-            if (!file.exists() || file.length() == 0L) {
-                println("File was not written correctly: ${file.absolutePath}")
-                return false
-            }
-            MediaPlayer.playSound(file,song)
-            return true
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
-        }
-    }
 
 
 

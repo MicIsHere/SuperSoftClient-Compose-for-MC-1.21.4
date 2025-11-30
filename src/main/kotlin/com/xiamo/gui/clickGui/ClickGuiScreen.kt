@@ -6,6 +6,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
@@ -117,19 +118,19 @@ class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of(
 
 
 
-
-        Box(modifier = Modifier.fillMaxSize().animateContentSize().scale(scale.width,scale.height)){
-            Box(modifier = Modifier.fillMaxSize()
-                .dropShadow(
-                    RoundedCornerShape(32.dp),
-                    Shadow(8.dp, Color(0,0,0,20))
-                )
-                .safeContentPadding()
-            ){
+        Box(modifier = Modifier.fillMaxSize()
+            .alpha(animateFloatAsState(if (isVisible) 1f else 0f).value)
+            .dropShadow(
+                RoundedCornerShape(32.dp),
+                Shadow(8.dp, Color(0,0,0,50))
+            )
+            .safeContentPadding()
+        ){
+            Box(modifier = Modifier.fillMaxSize().animateContentSize().scale(scale.width,scale.height)){
                 categories.forEach { it.renderCompose() }
             }
-
         }
+
 
 
     }

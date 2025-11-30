@@ -1,7 +1,10 @@
 package com.xiamo.event
 
+import androidx.compose.material.Switch
 import com.xiamo.SuperSoft
+import com.xiamo.gui.titleScreen.TitleScreen
 import com.xiamo.module.ModuleManager
+import net.minecraft.client.MinecraftClient
 import org.lwjgl.glfw.GLFW
 
 
@@ -48,6 +51,24 @@ object  EvenManager {
                     it.toggle()
                 }
 
+            }
+        }
+
+    }
+
+    @EventTarget
+    fun tickEvent(tickEvent: TickEvent){
+        ModuleManager.modules.filter { it.enabled }.forEach {
+            it.onTick()
+        }
+    }
+
+
+    @EventTarget
+    fun navigateEvent(navigateEvent: NavigateEvent){
+        when(navigateEvent.screen.javaClass){
+            net.minecraft.client.gui.screen.TitleScreen().javaClass -> {
+                MinecraftClient.getInstance().setScreen(TitleScreen())
             }
         }
 

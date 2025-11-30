@@ -68,7 +68,7 @@ object Hud : ComposeModule("Hud","界面") {
                 Text(title.value, fontSize = 30.sp, color = Color.White, style = TextStyle(shadow = androidx.compose.ui.graphics.Shadow(
                     Color.Black, offset = Offset(1f,1f), blurRadius = 5f
                 )))
-                Text("Version 1.0 😍", fontSize = 10.sp,color = Color.White)
+                Text("\uD83C\uDFC4", fontSize = 10.sp,color = Color.White)
             }
 
             Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxSize()) {
