@@ -75,7 +75,6 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
                     }
                 }
             }
-
         }
 
         super.renderCompose()
