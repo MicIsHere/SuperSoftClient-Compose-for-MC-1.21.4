@@ -77,6 +77,14 @@ object  EvenManager {
     }
 
 
+    @EventTarget
+    fun renderEntityEvent(entityRenderEvent: EntityRenderEvent){
+        ModuleManager.modules.filter { it.enabled }.forEach {
+            it.renderEntity(entityRenderEvent.entity,entityRenderEvent.matrix,entityRenderEvent.tickDelta)
+        }
+    }
+
+
 
 
 

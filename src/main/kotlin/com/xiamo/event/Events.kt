@@ -1,10 +1,12 @@
 package com.xiamo.event
 
+import androidx.compose.ui.graphics.Matrix
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Overlay
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.screen.TitleScreen
 import net.minecraft.client.render.VertexConsumerProvider
+import net.minecraft.client.render.entity.state.EntityRenderState
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.entity.Entity
 import net.minecraft.network.PacketByteBuf
@@ -32,6 +34,8 @@ class NavigateEvent(val screen : Screen): Event(){}
 class PlayerMovementTickPacketSendPre(x: Double,y: Double,z: Double,isOnGround : Boolean): Event(){
     var isCancelled  = false
 }
+
+class EntityRenderEvent(val entity: Entity,val matrix: MatrixStack,val tickDelta : Float): Event(){}
 
 
 

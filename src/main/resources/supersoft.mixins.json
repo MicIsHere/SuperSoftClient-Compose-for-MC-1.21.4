@@ -15,6 +15,7 @@
   "client": [
     "MixinClientEntity",
     "MixinClientPlayerEntity",
+    "MixinWorldRenderer",
     "MixinEntityRenderDispatcher",
     "MixinKey",
     "MixinLivingEntityRenderer",

@@ -24,6 +24,9 @@ import com.xiamo.notification.NotificationManager
 import com.xiamo.notification.Notify
 import com.xiamo.setting.*
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.render.entity.state.EntityRenderState
+import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.entity.Entity
 import java.util.concurrent.CopyOnWriteArrayList
 
 open class Module(val name: String, val description: String, val category: Category) {
@@ -33,19 +36,19 @@ open class Module(val name: String, val description: String, val category: Categ
     val settings = CopyOnWriteArrayList<AbstractSetting<*>>()
     var settingsExpanded by mutableStateOf(false)
 
-    protected fun booleanSetting(name: String, description: String, defaultValue: Boolean): BooleanSetting {
+    protected fun booleanSetting(name: String, description: String, defaultValue: Boolean) : BooleanSetting {
         val setting = BooleanSetting(name, description, defaultValue)
         settings.add(setting)
         return setting
     }
 
-    protected fun numberSetting(name: String, description: String, defaultValue: Double, min: Double, max: Double, step: Double = 0.1): NumberSetting {
+    protected fun numberSetting(name: String, description: String, defaultValue: Double, min: Double, max: Double, step: Double = 0.1) : NumberSetting {
         val setting = NumberSetting(name, description, defaultValue, min, max, step)
         settings.add(setting)
         return setting
     }
 
-    protected fun modeSetting(name: String, description: String, defaultValue: String, vararg modes: String): ModeSetting {
+    protected fun modeSetting(name: String, description: String, defaultValue: String, vararg modes: String) : ModeSetting {
         val setting = ModeSetting(name, description, defaultValue, modes.toList())
         settings.add(setting)
         return setting
@@ -73,7 +76,7 @@ open class Module(val name: String, val description: String, val category: Categ
     open fun onTick() {}
     open fun onMouseClicked(mouseX: Int, mouseY: Int) {}
     open fun onMouseReleased(mouseX: Int, mouseY: Int) {}
-
+    open fun renderEntity(entity: Entity,matrix : MatrixStack,tickDelta : Float) {}
     open fun enable() {
         NotificationManager.notifies.add(Notify(this.name, "Toggled", 2000L, {
             Row(

@@ -8,6 +8,7 @@ import com.xiamo.module.modules.movement.Speed
 import com.xiamo.module.modules.movement.Sprint
 import com.xiamo.module.modules.render.ClickGui
 import com.xiamo.module.modules.render.DynamicIsland
+import com.xiamo.module.modules.render.ESP
 import com.xiamo.module.modules.render.Hud
 import com.xiamo.module.modules.render.Lyric
 import kotlinx.coroutines.delay
@@ -30,6 +31,7 @@ object ModuleManager {
         modules.add(Sprint)
         modules.add(Speed)
         modules.add(KillAura)
+        modules.add(ESP)
 
 
 
