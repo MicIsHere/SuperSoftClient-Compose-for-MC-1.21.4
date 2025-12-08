@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "MixinGameHud",
+    "MixinPlayerInteractItemC2SPacket",
     "MixinScreen"
   ],
   "injectors": {
@@ -15,11 +16,12 @@
   "client": [
     "MixinClientEntity",
     "MixinClientPlayerEntity",
-    "MixinWorldRenderer",
+    "MixinEntity",
     "MixinEntityRenderDispatcher",
     "MixinKey",
     "MixinLivingEntityRenderer",
     "MixinMouse",
-    "MixinTick"
+    "MixinTick",
+    "MixinWorldRenderer"
   ]
 }

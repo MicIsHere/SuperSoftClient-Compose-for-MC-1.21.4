@@ -1,4 +1,4 @@
-让Jetbrains Compose通过skia在Minecraft上绘制，转头部分AI写的，根本不会写，自己写的和AI写的都会报Simulation，who can help me
+让Jetbrains Compose通过skia在Minecraft上绘制
 
 
 

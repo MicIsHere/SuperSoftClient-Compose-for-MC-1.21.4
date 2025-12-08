@@ -30,8 +30,10 @@ repositories {
 		url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 	}
 	maven { url 'https://jitpack.io' }
-
-
+	maven {
+		name = "Lenni0451"
+		url = uri("https://maven.lenni0451.net/everything")
+	}
 
 }
 
@@ -50,6 +52,9 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
+
+	// Mixin Extras - 用于@ModifyExpressionValue
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.3.5")))
 
 	shade("org.openjfx:javafx-media:20.0.2:win")
 	shade(compose.desktop.currentOs)

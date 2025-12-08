@@ -2,19 +2,17 @@ package com.xiamo.utils.rotation
 
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.MathHelper
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-/**
- * 旋转管理器 - 管理客户端与服务端的旋转同步
- * 支持静默旋转、移动修复、平滑旋转等功能
- */
+
 object RotationManager {
-    // ============== 目标旋转 ==============
+
     var targetRotation: Rotation? = null
         private set
 
-    // ============== 服务器旋转 (发送给服务器的值) ==============
+
     var serverYaw: Float = 0f
         private set
     var serverPitch: Float = 0f
@@ -23,7 +21,7 @@ object RotationManager {
     private var prevServerYaw: Float = 0f
     private var prevServerPitch: Float = 0f
 
-    // ============== 渲染旋转 (第三人称显示) ==============
+
     var renderYaw: Float = 0f
         private set
     var renderPitch: Float = 0f
@@ -32,59 +30,56 @@ object RotationManager {
     private var prevRenderYaw: Float = 0f
     private var prevRenderPitch: Float = 0f
 
-    // ============== 配置选项 ==============
+
     var silentRotation: Boolean = true
     var renderRotation: Boolean = true
 
-    /**
-     * 移动修复模式
-     */
-    enum class MoveFixMode {
-        OFF,      // 不修复移动
-        NORMAL,   // 普通修复 - 修正移动方向
 
-        STRICT    // 严格修复 - 完全同步
+    enum class MoveFixMode {
+        OFF,
+        NORMAL,
+        STRICT
     }
 
     var moveFixMode: MoveFixMode = MoveFixMode.NORMAL
 
-    // ============== 旋转速度和平滑度 ==============
+
     var rotationSpeed: Float = 45f
     var smoothness: Float = 0.6f
 
-    // ============== 随机化配置 ==============
+
     var randomizationEnabled: Boolean = false
     var yawRandomRange: Float = 1.5f
     var pitchRandomRange: Float = 1.0f
 
-    // ============== 随机化内部状态 ==============
+
     private var currentYawOffset: Float = 0f
     private var currentPitchOffset: Float = 0f
     private var randomUpdateCounter: Int = 0
 
-    // ============== 状态标记 ==============
+
     var isActive: Boolean = false
         private set
     private var initialized: Boolean = false
     private var currentTickDelta: Float = 0f
 
-    // ============== 旋转修改状态 (用于Mixin) ==============
+
     private var rotationApplied: Boolean = false
     private var savedClientYaw: Float = 0f
     private var savedClientPitch: Float = 0f
     private var savedPrevYaw: Float = 0f
     private var savedPrevPitch: Float = 0f
 
-    // ============== 公共方法 ==============
 
-    /**
-     * 设置目标旋转
-     */
+
+
     fun setTargetRotation(yaw: Float, pitch: Float) {
-        targetRotation = Rotation(
+        val rotation = Rotation(
             MathHelper.wrapDegrees(yaw),
             pitch.coerceIn(-90f, 90f)
         )
+
+        targetRotation = normalizeRotation(rotation)
         isActive = true
     }
 
@@ -92,9 +87,7 @@ object RotationManager {
         setTargetRotation(rotation.yaw, rotation.pitch)
     }
 
-    /**
-     * 清除目标旋转
-     */
+
     fun clearTarget() {
         targetRotation = null
         isActive = false
@@ -108,44 +101,53 @@ object RotationManager {
         currentTickDelta = delta
     }
 
-    /**
-     * 每tick更新旋转 - 在tick开始时调用
-     */
+
     fun tick() {
         val player = MinecraftClient.getInstance().player ?: return
         val target = targetRotation ?: return
 
-        // 更新随机化
+
         updateRandomValues()
 
-        // 初始化
+
         if (!initialized) {
             initializeFromPlayer(player.yaw, player.pitch)
             initialized = true
         }
 
-        // 保存上一帧
+
         prevServerYaw = serverYaw
         prevServerPitch = serverPitch
         prevRenderYaw = renderYaw
         prevRenderPitch = renderPitch
 
-        // 计算目标旋转（带随机偏移）
+
         val targetYaw = target.yaw + currentYawOffset
         val targetPitch = (target.pitch + currentPitchOffset).coerceIn(-90f, 90f)
 
-        // 计算差值并限制速度
+
         val yawDiff = MathHelper.wrapDegrees(targetYaw - serverYaw)
         val pitchDiff = targetPitch - serverPitch
 
         val clampedYawDiff = yawDiff.coerceIn(-rotationSpeed, rotationSpeed)
         val clampedPitchDiff = pitchDiff.coerceIn(-rotationSpeed * 0.8f, rotationSpeed * 0.8f)
 
-        // 应用平滑度
-        serverYaw = MathHelper.wrapDegrees(serverYaw + clampedYawDiff * smoothness)
-        serverPitch = (serverPitch + clampedPitchDiff * smoothness).coerceIn(-90f, 90f)
 
-        // 同步渲染旋转
+        val newYaw = serverYaw + clampedYawDiff * smoothness
+        val newPitch = (serverPitch + clampedPitchDiff * smoothness).coerceIn(-90f, 90f)
+
+
+        val gcdValue = gcd
+        val yawChange = MathHelper.wrapDegrees(newYaw - serverYaw)
+        val pitchChange = newPitch - serverPitch
+
+        val normalizedYawChange = (yawChange / gcdValue).roundToInt().toDouble() * gcdValue
+        val normalizedPitchChange = (pitchChange / gcdValue).roundToInt().toDouble() * gcdValue
+
+        serverYaw = MathHelper.wrapDegrees(serverYaw + normalizedYawChange.toFloat())
+        serverPitch = (serverPitch + normalizedPitchChange.toFloat()).coerceIn(-90f, 90f)
+
+
         renderYaw = serverYaw
         renderPitch = serverPitch
     }
@@ -176,12 +178,7 @@ object RotationManager {
         }
     }
 
-    // ============== 移动修复方法 ==============
 
-    /**
-     * 应用旋转到玩家 - 在tick/tickMovement开始时调用
-     * 这会保存客户端旋转并设置服务器旋转
-     */
     fun applyRotationToPlayer(): Boolean {
         if (!isActive || targetRotation == null) return false
         if (moveFixMode == MoveFixMode.OFF) return false
@@ -189,13 +186,13 @@ object RotationManager {
 
         val player = MinecraftClient.getInstance().player ?: return false
 
-        // 保存客户端旋转
+
         savedClientYaw = player.yaw
         savedClientPitch = player.pitch
         savedPrevYaw = player.prevYaw
         savedPrevPitch = player.prevPitch
 
-        // 应用服务器旋转
+
         player.yaw = serverYaw
         player.pitch = serverPitch
         player.prevYaw = prevServerYaw
@@ -205,9 +202,7 @@ object RotationManager {
         return true
     }
 
-    /**
-     * 恢复客户端旋转 - 在sendMovementPackets之后调用
-     */
+
     fun restoreClientRotation() {
         if (!rotationApplied) return
 
@@ -222,19 +217,15 @@ object RotationManager {
         rotationApplied = false
     }
 
-    /**
-     * 检查旋转是否已应用
-     */
+
     fun isRotationApplied(): Boolean = rotationApplied
 
-    /**
-     * 是否应该应用移动修复
-     */
+
     fun shouldApplyMoveFix(): Boolean {
         return isActive && moveFixMode != MoveFixMode.OFF && targetRotation != null
     }
 
-    // ============== 服务器旋转获取方法 ==============
+
 
     fun getServerYawNeeded(): Float? {
         if (!isActive || targetRotation == null) return null
@@ -256,7 +247,7 @@ object RotationManager {
         return prevServerPitch
     }
 
-    // ============== 渲染旋转获取方法 ==============
+
 
     fun getRenderYaw(originalYaw: Float): Float {
         if (!isActive || !renderRotation) return originalYaw
@@ -278,6 +269,16 @@ object RotationManager {
         return MathHelper.lerp(tickDelta, prevRenderPitch, renderPitch)
     }
 
+    // ============== GCD Fix ==============
+
+
+    val gcd: Double
+        get() {
+            val mc = MinecraftClient.getInstance()
+            val f = mc.options.mouseSensitivity.value * 0.6 + 0.2
+            return f * f * f * 8.0 * 0.15
+        }
+
     // ============== 工具方法 ==============
 
     fun reset() {
@@ -298,6 +299,32 @@ object RotationManager {
         val yaw = (Math.toDegrees(kotlin.math.atan2(diffZ, diffX)) - 90.0).toFloat()
         val pitch = (-Math.toDegrees(kotlin.math.atan2(diffY, dist))).toFloat()
         return Rotation(MathHelper.wrapDegrees(yaw), pitch.coerceIn(-90f, 90f))
+    }
+
+
+    fun normalizeRotation(rotation: Rotation): Rotation {
+        val currentRot = if (isActive && targetRotation != null) {
+            Rotation(serverYaw, serverPitch)
+        } else {
+            val player = MinecraftClient.getInstance().player ?: return rotation
+            Rotation(player.yaw, player.pitch)
+        }
+
+        val gcdValue = gcd
+
+
+        val yawDiff = MathHelper.wrapDegrees(rotation.yaw - currentRot.yaw)
+        val pitchDiff = rotation.pitch - currentRot.pitch
+
+
+        val normalizedYawDiff = (yawDiff / gcdValue).roundToInt().toDouble() * gcdValue
+        val normalizedPitchDiff = (pitchDiff / gcdValue).roundToInt().toDouble() * gcdValue
+
+
+        val normalizedYaw = currentRot.yaw + normalizedYawDiff.toFloat()
+        val normalizedPitch = (currentRot.pitch + normalizedPitchDiff.toFloat()).coerceIn(-90f, 90f)
+
+        return Rotation(normalizedYaw, normalizedPitch)
     }
 
     fun isRotationReached(threshold: Float = 5f): Boolean {
