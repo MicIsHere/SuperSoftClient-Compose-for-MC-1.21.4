@@ -9,6 +9,7 @@ import com.xiamo.module.modules.render.Brightness
 import com.xiamo.module.modules.render.ClickGui
 import com.xiamo.module.modules.render.DynamicIsland
 import com.xiamo.module.modules.render.ESP
+import com.xiamo.module.modules.render.EffectHud
 import com.xiamo.module.modules.render.Hud
 import com.xiamo.module.modules.render.Lyric
 import java.util.concurrent.CopyOnWriteArrayList
@@ -29,6 +30,8 @@ object ModuleManager {
         modules.add(KillAura)
         modules.add(ESP)
         modules.add(Brightness)
+        modules.add(EffectHud)
+
 
 
 

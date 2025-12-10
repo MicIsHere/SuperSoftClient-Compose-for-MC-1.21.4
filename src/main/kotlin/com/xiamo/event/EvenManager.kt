@@ -62,7 +62,7 @@ object  EvenManager {
         ModuleManager.modules.filter { it.enabled }.forEach {
             it.onTick()
         }
-        //RotationManager.tick()
+        RotationManager.tick()
     }
 
 

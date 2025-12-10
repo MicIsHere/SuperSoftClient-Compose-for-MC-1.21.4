@@ -19,8 +19,11 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.xiamo.gui.ComposeScreen
 import com.xiamo.module.Category
@@ -101,6 +104,10 @@ class ClickGuiScreen(val parentScreen: Screen? = null) : ComposeScreen(Text.of("
                 .fillMaxSize()
                 .alpha(animateFloatAsState(if (isVisible) 1f else 0f).value)
                 .safeContentPadding()
+                .graphicsLayer(shadowElevation = 1f)
+
+
+
         ) {
             Box(
                 modifier = Modifier

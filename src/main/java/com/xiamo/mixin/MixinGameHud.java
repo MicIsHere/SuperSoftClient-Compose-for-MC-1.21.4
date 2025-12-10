@@ -1,6 +1,7 @@
 package com.xiamo.mixin;
 
 import com.xiamo.event.RenderEvent;
+import com.xiamo.module.modules.render.EffectHud;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
@@ -16,4 +17,13 @@ public class MixinGameHud {
 	private void hookGameHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci){
 		new RenderEvent(context).broadcast();
 	}
+
+    @Inject(method = "renderStatusEffectOverlay",at = @At("HEAD"), cancellable = true)
+    private void hookEffectOverlay(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci){
+        if (EffectHud.INSTANCE.getEnabled()) {
+            EffectHud.INSTANCE.getTickCounter().setValue(tickCounter.getTickDelta(true));
+            ci.cancel();
+        }
+    }
+
 }
