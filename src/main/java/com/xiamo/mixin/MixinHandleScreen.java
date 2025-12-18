@@ -17,22 +17,22 @@ public abstract class MixinHandleScreen {
 
     @Inject(method = "renderBackground",at = @At("HEAD"), cancellable = true)
     private void hookRenderBackGround(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci){
-        if (ChestStealer.INSTANCE.isStealing() && ChestStealer.INSTANCE.isSilence().getValue()) ci.cancel();
+        if (ChestStealer.INSTANCE.getHide() && ChestStealer.INSTANCE.isSilence().getValue()) ci.cancel();
     }
 
     @Inject(method = "render",at = @At("HEAD"), cancellable = true)
     private void hookRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci){
-        if (ChestStealer.INSTANCE.isStealing() && ChestStealer.INSTANCE.isSilence().getValue()) ci.cancel();
+        if (ChestStealer.INSTANCE.getHide() && ChestStealer.INSTANCE.isSilence().getValue()) ci.cancel();
     }
 
     @Inject(method = "keyPressed",at = @At("HEAD"), cancellable = true)
     private void hookKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir){
-        if (ChestStealer.INSTANCE.isStealing() && ChestStealer.INSTANCE.isSilence().getValue()) cir.cancel();
+        if (ChestStealer.INSTANCE.getHide() && ChestStealer.INSTANCE.isSilence().getValue()) cir.cancel();
     }
 
     @Inject(method = "mouseClicked",at = @At("HEAD"), cancellable = true)
     private void hookmouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir){
-        if (ChestStealer.INSTANCE.isStealing() && ChestStealer.INSTANCE.isSilence().getValue() && ChestStealer.INSTANCE.getHide()) cir.cancel();
+        if (ChestStealer.INSTANCE.getHide() && ChestStealer.INSTANCE.isSilence().getValue()) cir.cancel();
     }
 
 

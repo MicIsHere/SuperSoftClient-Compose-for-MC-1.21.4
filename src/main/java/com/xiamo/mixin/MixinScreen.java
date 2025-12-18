@@ -33,16 +33,25 @@ public class MixinScreen {
             ci.cancel();
             new NavigateEvent(screen).broadcast();
         }
+        if (ChestStealer.INSTANCE.isChestScreen(screen) && screen != null) {
+            ChestStealer.INSTANCE.setHide(true);
+        }
+
+
+
     }
 
     @Redirect(method = "setScreen",at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Mouse;unlockCursor()V"))
     private void unlockCursor(Mouse instance){
-
         if (MinecraftClient.getInstance().world != null) {
-            System.out.println(ChestStealer.INSTANCE.getHide());
-            if (ChestStealer.INSTANCE.isSilence().getValue() && !ChestStealer.INSTANCE.getHide()) {
+            if (!ChestStealer.INSTANCE.getHide()) {
                 instance.unlockCursor();
             }
+
+            if (ChestStealer.INSTANCE.isChestScreen() && ChestStealer.INSTANCE.isSilence().getValue()){
+                instance.unlockCursor();
+            }
+
         }
     }
 }
