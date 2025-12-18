@@ -48,7 +48,7 @@ public class MixinScreen {
                 instance.unlockCursor();
             }
 
-            if (ChestStealer.INSTANCE.isChestScreen() && ChestStealer.INSTANCE.isSilence().getValue()){
+            if (ChestStealer.INSTANCE.isChestScreen() && !ChestStealer.INSTANCE.isSilence().getValue()){
                 instance.unlockCursor();
             }
 
